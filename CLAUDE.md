@@ -57,3 +57,4 @@
 
 - 저장소·주소(사용자 요청: 개인 이름이 안 보이게): GitHub 단체 somjumeok-boxing의 somjumeok-boxing.github.io, 사이트 https://somjumeok-boxing.github.io/ (GAME_URL·초대 링크도 이 주소). 기록 없이 새로 시작한 저장소. 배포는 PR 없이 main에 바로 push(작성자 Claude <noreply@anthropic.com>, PR·병합은 사용자 계정 이름이 남으므로 만들지 않음). 커밋·문서에 사용자 계정 이름·이메일을 넣지 않는다.
 - 보안 점검(v36, 모르는 사람에게 공유 전): CDN 스크립트 3개 SRI(integrity+crossorigin, 버전 바꾸면 해시도 다시 계산), 사이트 아이콘(icon-192), 온라인 상대 조작값 범위 제한(move ±1), onNetData try/catch(이상한 데이터에도 안 멈춤). 이름·글자는 모두 textContent(innerHTML에는 고정 문구만). 조작 데이터 테스트(test/evil.js)·실사이트 안드로이드/아이폰(WebKit)/PC 로드 확인.
+- 오른손 먹통·가드 고정 수정(v37, 친구 아이폰: 한 판 더 후 펀치 안 먹힘/가드 고정): 손 뗀 신호(pointerup)가 결과 화면 등 다른 요소로 가면 act가 남아 이후 터치를 전부 무시하던 문제. 창 전체 pointerup/cancel(capture)로 끝 처리, lostpointercapture면 버림, 새 터치가 오면 남은 act 버림(dropAct), resetInputs()를 시작·다시 하기·참가자 start·판 끝·앱 전환 때 호출. 테스트 test/rematch.js·guardstuck.js(예전 버전 재현 확인).

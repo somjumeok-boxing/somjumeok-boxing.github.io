@@ -1792,6 +1792,7 @@ function finish(reason) {
     return;
   }
   mode = 'end'; endTimer = reason === 'ko' ? 3.2 : 0.6;
+  resetInputs();   // 결과 화면이 뜨기 전에 누르고 있던 손 정리
   const me = ME(), op = me.foe, mi = me === kong ? 0 : 1;
   const myW = match.wins[mi], opW = match.wins[1 - mi];
   const win = myW > opW;
@@ -1827,7 +1828,7 @@ const net = {
 const NET_TIMEOUT = 20000;   // 이만큼 소식이 없어야 진짜 끊김(그 전엔 자동으로 다시 연결 시도)
 const NET_SHAKY = 2500;      // 이만큼 소식이 없으면 '다시 연결하는 중' 안내
 // 게임 버전(친구와 서로 다른 버전이면 연결이 안 될 수 있어 화면에 표시하고 서로 비교)
-const BUILD = 'v36';
+const BUILD = 'v37';
 $('verLbl').textContent = BUILD;
 // 혼자 할 때 고른 캐릭터(감자=kong, 토마토=bam). 온라인은 방장=감자, 참가자=토마토
 let playerPick = 'kong';
@@ -2164,6 +2165,7 @@ function onNetData2(d) {
     if (d.t === 'start') {
       if (d.s) net.hostSide = d.s === 'bam' ? 'bam' : 'kong';
       ensureAudio(); sfx('bell');
+      resetInputs();
       resetMatch(); resetRound(); net.snap = null; net.started = true;
       mode = 'fight';
   startRoundLock();
@@ -2258,7 +2260,8 @@ function tryDuck(f) {
   f.duckTimer = DUCK_TIME; f.duckCool = DUCK_TIME + DUCK_COOL;
 }
 zAct.addEventListener('pointerdown', (e) => {
-  if (act) return;
+  // 손 뗀 신호를 놓쳐 남아 있던 동작(가드 고정·오른손 먹통 원인)은 새 터치가 오면 버림
+  if (act) { if (act.id === e.pointerId) return; dropAct(); }
   e.preventDefault(); ensureAudio();
   try { zAct.setPointerCapture(e.pointerId); } catch (_) {}
   act = { id: e.pointerId, x: e.clientX, y: e.clientY, mode: null };
@@ -2292,6 +2295,22 @@ function actEnd(e) {
 }
 zAct.addEventListener('pointerup', actEnd);
 zAct.addEventListener('pointercancel', actEnd);
+function dropAct() {
+  if (!act) return;
+  clearTimeout(act.timer);
+  if (act.mode === 'guard') ME().want.guard = false;
+  act = null; actFx.hidden = true;
+}
+// 결과 화면 같은 창이 위에 뜨면 손 뗀 신호가 다른 곳으로 갈 수 있어 창 전체에서 받음
+window.addEventListener('pointerup', (e) => { if (act && e.pointerId === act.id && e.target !== zAct) actEnd(e); if (e.pointerId === stickId && e.target !== zMove) stickReset(); }, true);
+window.addEventListener('pointercancel', (e) => { if (act && e.pointerId === act.id && e.target !== zAct) actEnd(e); if (e.pointerId === stickId && e.target !== zMove) stickReset(); }, true);
+zAct.addEventListener('lostpointercapture', (e) => { if (act && e.pointerId === act.id) dropAct(); });
+// 판 시작·다시 하기·결과 화면·앱 전환 때 조작 상태를 깨끗이(누르고 있던 가드·이동 해제)
+function resetInputs() {
+  keys.clear(); stickReset(); dropAct();
+  for (const f of [kong, bam]) f.want.guard = false;
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) resetInputs(); });
 for (const z of [zMove, zAct]) z.addEventListener('contextmenu', (e) => e.preventDefault());
 
 // 키보드
@@ -2354,6 +2373,7 @@ function goLandscape() {
   } catch (_) {}
 }
 function startFight() {
+  resetInputs();
   goLandscape();
   ensureAudio(); sfx('bell');
   resetMatch();
