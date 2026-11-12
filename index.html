@@ -7,6 +7,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -398,9 +399,9 @@ body {
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js" integrity="sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
 <script>
 (() => {
 'use strict';
@@ -1826,7 +1827,7 @@ const net = {
 const NET_TIMEOUT = 20000;   // 이만큼 소식이 없어야 진짜 끊김(그 전엔 자동으로 다시 연결 시도)
 const NET_SHAKY = 2500;      // 이만큼 소식이 없으면 '다시 연결하는 중' 안내
 // 게임 버전(친구와 서로 다른 버전이면 연결이 안 될 수 있어 화면에 표시하고 서로 비교)
-const BUILD = 'v35';
+const BUILD = 'v36';
 $('verLbl').textContent = BUILD;
 // 혼자 할 때 고른 캐릭터(감자=kong, 토마토=bam). 온라인은 방장=감자, 참가자=토마토
 let playerPick = 'kong';
@@ -2054,7 +2055,8 @@ function hostTick(dt) {
   const i = net.inp, g = hostF().foe;
   g.want.guard = false; g.want.duck = false;
   if (i) {
-    g.move.x = i.mx; g.move.y = i.my; g.want.guard = !!i.g;
+    const cl = (v) => Math.max(-1, Math.min(1, +v || 0));   // 조작된 값 막기
+    g.move.x = cl(i.mx); g.move.y = cl(i.my); g.want.guard = !!i.g;
     if (i.p > net.lastP) { net.lastP = i.p; g.want.punch = true; }
     if ((i.h || 0) > net.lastH) { net.lastH = i.h; g.want.heavy = true; }
     if ((i.ts || 0) > net.lastT) { net.lastT = i.ts; g.want.taunt = i.tk === 'dance' ? 'dance' : 'beckon'; }
@@ -2128,7 +2130,10 @@ function applySnap(sn) {
   if ((sn.m === 'end' || sn.m === 'between') && mode === 'fight') finish(sn.r || 'ko');
 }
 function onNetData(d) {
-  if (!d || !d.t) return;
+  try { onNetData2(d); } catch (e) { console.warn('bad net data', e); }   // 이상한 데이터가 와도 게임이 멈추지 않게
+}
+function onNetData2(d) {
+  if (!d || typeof d !== 'object' || typeof d.t !== 'string') return;
   net.lastHeard = performance.now();
   net.gotData = true;
   if (net.shaky) netShaky(false);
