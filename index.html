@@ -1828,7 +1828,7 @@ const net = {
 const NET_TIMEOUT = 20000;   // 이만큼 소식이 없어야 진짜 끊김(그 전엔 자동으로 다시 연결 시도)
 const NET_SHAKY = 2500;      // 이만큼 소식이 없으면 '다시 연결하는 중' 안내
 // 게임 버전(친구와 서로 다른 버전이면 연결이 안 될 수 있어 화면에 표시하고 서로 비교)
-const BUILD = 'v37';
+const BUILD = 'v38';
 $('verLbl').textContent = BUILD;
 // 혼자 할 때 고른 캐릭터(감자=kong, 토마토=bam). 온라인은 방장=감자, 참가자=토마토
 let playerPick = 'kong';
@@ -2189,7 +2189,8 @@ const zMove = $('zMove'), zAct = $('zAct'), stick = $('stick'), knob = $('knob')
 const STICK_R = 50;
 let stickId = null, stickO = { x: 0, y: 0 }, touchMove = { x: 0, y: 0 };
 zMove.addEventListener('pointerdown', (e) => {
-  if (stickId !== null) return;
+  // 손 뗀 신호를 놓쳐 조이스틱이 한쪽에 고정돼 있었으면 새 터치로 바로 다시 잡음
+  if (stickId !== null) { if (stickId === e.pointerId) return; stickReset(); }
   e.preventDefault(); ensureAudio();
   stickId = e.pointerId;
   const r = stick.getBoundingClientRect();
@@ -2221,6 +2222,7 @@ function stickEnd(e) {
 }
 zMove.addEventListener('pointerup', stickEnd);
 zMove.addEventListener('pointercancel', stickEnd);
+zMove.addEventListener('lostpointercapture', stickEnd);
 
 // 오른쪽: 탭 = 펀치, 꾹 = 가드, 아래로 밀기 = 숙이기(잠깐)
 const HOLD_MS = 170, SWIPE_PX = 34, DUCK_TIME = 0.6;
@@ -2311,6 +2313,17 @@ function resetInputs() {
   for (const f of [kong, bam]) f.want.guard = false;
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) resetInputs(); });
+// 아이폰: 전화·알림 배너 등으로 손 뗀 신호가 아예 안 올 때가 있음 →
+// 화면에 손가락이 하나도 없는데 조이스틱·오른손이 눌린 상태로 남아 있으면 풀어 줌(펀치 탭 처리 뒤에 확인)
+let touchCount = 0;
+function checkNoTouch(e) {
+  touchCount = e.touches ? e.touches.length : 0;
+  if (touchCount) return;
+  setTimeout(() => { if (touchCount === 0) { if (stickId !== null) stickReset(); if (act) dropAct(); } }, 80);
+}
+document.addEventListener('touchend', checkNoTouch, { capture: true, passive: true });
+document.addEventListener('touchcancel', checkNoTouch, { capture: true, passive: true });
+document.addEventListener('touchstart', (e) => { touchCount = e.touches.length; }, { capture: true, passive: true });
 for (const z of [zMove, zAct]) z.addEventListener('contextmenu', (e) => e.preventDefault());
 
 // 키보드
