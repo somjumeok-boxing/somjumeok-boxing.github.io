@@ -218,7 +218,9 @@ body {
 .rotate p { margin: 0; font-family: var(--f-display); font-size: 22px; color: var(--ink); }
 .rotate svg { width: 96px; height: 96px; animation: tilt 1.8s ease-in-out infinite; }
 @keyframes tilt { 0%, 25% { transform: rotate(0); } 55%, 100% { transform: rotate(-90deg); } }
-@media (orientation: portrait) { .rotate { display: grid; } }
+/* 세로로 들면 게임 전체(#app)를 옆으로 눕혀 보여줌(아이폰 세로 고정이어도 바로 플레이) */
+#app { position: fixed; inset: 0; }
+html.rot #app { inset: auto; left: 0; top: 0; transform-origin: 0 0; }
 @media (prefers-reduced-motion: reduce) { .rotate svg { animation: none; transform: rotate(-90deg); } }
 /* 온라인 대결 */
 .ver { margin: 0; font-size: 11px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
@@ -239,18 +241,17 @@ body {
 
 /* 가로 화면: 시작 카드를 2단으로, 넘치면 스크롤 */
 .overlay { overflow-y: auto; }
-@media (orientation: landscape) and (max-height: 600px) {
-  .overlay { padding-block: 10px; }
-  .card { width: min(780px, 100%); grid-template-columns: 1fr 1.15fr; column-gap: 20px; row-gap: 10px; padding: 14px 18px; }
-  #startScreen .card h1 { font-size: 40px; }
-  #startScreen .card > * { grid-column: 1; grid-row: auto; }
-  #startScreen .card.compact { grid-template-columns: 1fr; width: min(400px, 100%); }
-  #endScreen .card { grid-template-columns: 1fr; width: min(380px, 100%); }
-  #onlineScreen .card { grid-template-columns: 1fr; width: min(420px, 100%); row-gap: 8px; }
-  #onlineScreen .code { font-size: 40px; padding: 2px 0; }
-  .zone { top: calc(env(safe-area-inset-top, 0px) + 70px); }
-  .sound { top: calc(env(safe-area-inset-top, 0px) + 84px); }
-}
+/* 가로(낮은) 화면: html.land(세로를 눕힌 경우 포함) */
+html.land .overlay { padding-block: 10px; }
+html.land .card { width: min(780px, 100%); grid-template-columns: 1fr 1.15fr; column-gap: 20px; row-gap: 10px; padding: 14px 18px; }
+html.land #startScreen .card h1 { font-size: 40px; }
+html.land #startScreen .card > * { grid-column: 1; grid-row: auto; }
+html.land #startScreen .card.compact { grid-template-columns: 1fr; width: min(400px, 100%); }
+html.land #endScreen .card { grid-template-columns: 1fr; width: min(380px, 100%); }
+html.land #onlineScreen .card { grid-template-columns: 1fr; width: min(420px, 100%); row-gap: 8px; }
+html.land #onlineScreen .code { font-size: 40px; padding: 2px 0; }
+html.land .zone { top: calc(env(safe-area-inset-top, 0px) + 70px); }
+html.land .sound { top: calc(env(safe-area-inset-top, 0px) + 84px); }
 /* 공유 버튼(시작 카드 오른쪽 위) · 알림 토스트 */
 #startCard { position: relative; }
 #startScreen .card > .share-btn { grid-column: auto; }
@@ -260,6 +261,8 @@ body {
   box-shadow: 2px 3px 0 var(--ink);
 }
 .share-btn svg { width: 20px; height: 20px; }
+.share-btn.install-btn { right: 58px; }
+#startScreen .card > .install-btn { grid-column: auto; }
 .share-btn:active { transform: translate(2px, 3px); box-shadow: none; }
 #toast {
   position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); transform: translateX(-50%); z-index: 12;
@@ -309,6 +312,7 @@ body {
 
 <div class="overlay" id="startScreen">
   <div class="card" id="startCard">
+    <button class="share-btn install-btn" id="installBtn" type="button" aria-label="앱으로 설치" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 19h14"/></svg></button>
     <button class="share-btn" id="shareBtn" type="button" aria-label="게임 링크 공유"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
     <h1>솜<span>주먹</span></h1>
     <div class="diff pickrow" role="group" aria-label="내 캐릭터">
@@ -323,19 +327,18 @@ body {
     </div>
     <button class="go" id="startBtn" type="button">링 위로!</button>
     <button class="go ghost" id="onlineBtn" type="button">친구와 온라인 대결</button>
-    <button class="fsHint" id="fsHintBtn" type="button" hidden>📲 주소창 없이 전체 화면으로 하기</button>
   </div>
 </div>
 
 <div class="overlay" id="fsScreen" hidden>
   <div class="card">
-    <h2>전체 화면으로 하기</h2>
+    <h2>앱으로 설치하기</h2>
     <ol>
       <li id="fsStep1">주소창 오른쪽 <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러요.</li>
-      <li><b>홈 화면에 추가</b>를 눌러요.</li>
+      <li id="fsStep2"><b>홈 화면에 추가</b>를 눌러요.</li>
       <li>홈 화면에 생긴 <b>솜주먹</b> 아이콘으로 열면 주소창 없이 전체 화면이에요.</li>
     </ol>
-    <p class="sub">아이폰은 브라우저 안에서는 전체 화면이 안 돼서 이렇게 해야 해요. 초대 링크는 브라우저로 열리니, 홈 화면 앱에서는 코드 4자리를 넣어 참가하세요.</p>
+    <p class="sub">초대 링크는 브라우저로 열리니, 설치한 앱에서는 코드 4자리를 넣어 참가하세요.</p>
     <button class="go" id="fsClose" type="button">알겠어요</button>
   </div>
 </div>
@@ -406,6 +409,24 @@ body {
 (() => {
 'use strict';
 const $ = (id) => document.getElementById(id);
+// 세로 화면이면 게임 전체를 옆으로 눕힘: 모든 화면 요소를 #app 안에 넣고 #app만 돌림
+const app = document.createElement('div'); app.id = 'app';
+for (const el of [...document.body.children]) if (el.tagName !== 'SCRIPT') app.appendChild(el);
+document.body.insertBefore(app, document.body.firstChild);
+const coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+let ROT = false, AW = window.innerWidth, AH = window.innerHeight;   // 게임 화면(가로 기준) 크기
+function layoutApp() {
+  const W = window.innerWidth, H = window.innerHeight;
+  ROT = coarse && H > W;
+  AW = ROT ? H : W; AH = ROT ? W : H;
+  document.documentElement.classList.toggle('rot', ROT);
+  document.documentElement.classList.toggle('land', AW > AH && AH <= 600);
+  if (ROT) { app.style.width = AW + 'px'; app.style.height = AH + 'px'; app.style.transform = 'translateX(' + W + 'px) rotate(90deg)'; }   // 폰 윗부분이 왼쪽으로 가게 눕힌 방향(흔한 가로 방향)
+  else { app.style.width = app.style.height = app.style.transform = ''; }
+}
+// 화면(터치) 좌표 → 게임 화면 좌표
+const toApp = (x, y) => (ROT ? { x: y, y: window.innerWidth - x } : { x, y });
+layoutApp();
 const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- 3D 기본 ---------- */
@@ -704,7 +725,8 @@ function frameCamera() {
   camLook.set(viewX, camera.aspect < 0.8 ? 0.5 : 0.68, viewZ);
 }
 function resize() {
-  const w = window.innerWidth, h = window.innerHeight;
+  layoutApp();
+  const w = AW, h = AH;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
@@ -1149,9 +1171,9 @@ function popAt(f, text, cls = '') {
   tmpV.project(camera);
   const el = document.createElement('div');
   el.className = 'pop ' + cls; el.textContent = text;
-  const px = (tmpV.x + 1) / 2 * window.innerWidth + (Math.random() * 30 - 15);
-  el.style.left = Math.max(80, Math.min(window.innerWidth - 80, px)) + 'px';
-  el.style.top = ((1 - tmpV.y) / 2 * window.innerHeight) + 'px';
+  const px = (tmpV.x + 1) / 2 * AW + (Math.random() * 30 - 15);
+  el.style.left = Math.max(80, Math.min(AW - 80, px)) + 'px';
+  el.style.top = ((1 - tmpV.y) / 2 * AH) + 'px';
   pops.appendChild(el);
   setTimeout(() => el.remove(), 850);
 }
@@ -1828,7 +1850,7 @@ const net = {
 const NET_TIMEOUT = 20000;   // 이만큼 소식이 없어야 진짜 끊김(그 전엔 자동으로 다시 연결 시도)
 const NET_SHAKY = 2500;      // 이만큼 소식이 없으면 '다시 연결하는 중' 안내
 // 게임 버전(친구와 서로 다른 버전이면 연결이 안 될 수 있어 화면에 표시하고 서로 비교)
-const BUILD = 'v38';
+const BUILD = 'v39';
 $('verLbl').textContent = BUILD;
 // 혼자 할 때 고른 캐릭터(감자=kong, 토마토=bam). 온라인은 방장=감자, 참가자=토마토
 let playerPick = 'kong';
@@ -2194,7 +2216,7 @@ zMove.addEventListener('pointerdown', (e) => {
   e.preventDefault(); ensureAudio();
   stickId = e.pointerId;
   const r = stick.getBoundingClientRect();
-  stickO = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  stickO = toApp(r.left + r.width / 2, r.top + r.height / 2);
   try { zMove.setPointerCapture(e.pointerId); } catch (_) {}
   stick.classList.add('on'); knob.style.transition = 'none';
   stickMove(e);
@@ -2202,7 +2224,8 @@ zMove.addEventListener('pointerdown', (e) => {
 zMove.addEventListener('pointermove', stickMove);
 function stickMove(e) {
   if (e.pointerId !== stickId) return;
-  let dx = e.clientX - stickO.x, dy = e.clientY - stickO.y;
+  const q = toApp(e.clientX, e.clientY);
+  let dx = q.x - stickO.x, dy = q.y - stickO.y;
   const len = Math.hypot(dx, dy);
   if (len > STICK_R) { dx *= STICK_R / len; dy *= STICK_R / len; }
   knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
@@ -2266,7 +2289,8 @@ zAct.addEventListener('pointerdown', (e) => {
   if (act) { if (act.id === e.pointerId) return; dropAct(); }
   e.preventDefault(); ensureAudio();
   try { zAct.setPointerCapture(e.pointerId); } catch (_) {}
-  act = { id: e.pointerId, x: e.clientX, y: e.clientY, mode: null };
+  const q = toApp(e.clientX, e.clientY);
+  act = { id: e.pointerId, x: q.x, y: q.y, mode: null };
   const mine = act;
   act.timer = setTimeout(() => {
     if (act === mine && !mine.mode) { mine.mode = 'guard'; ME().want.guard = true; showFx('guard', mine.x, mine.y); }
@@ -2274,18 +2298,19 @@ zAct.addEventListener('pointerdown', (e) => {
 });
 zAct.addEventListener('pointermove', (e) => {
   if (!act || e.pointerId !== act.id || act.mode === 'duck' || act.mode === 'sway') return;
-  const dx = e.clientX - act.x, dy = e.clientY - act.y;
+  const q = toApp(e.clientX, e.clientY);
+  const dx = q.x - act.x, dy = q.y - act.y;
   if (dy > SWIPE_PX && dy > Math.abs(dx) * 1.2) {
     clearTimeout(act.timer);
-    act.mode = 'duck'; ME().want.guard = false; doDuck(); showFx('duck', e.clientX, e.clientY);
+    act.mode = 'duck'; ME().want.guard = false; doDuck(); showFx('duck', q.x, q.y);
   } else if (Math.abs(dx) > SWIPE_PX && Math.abs(dx) > Math.abs(dy) * 1.2 && act.mode !== 'heavy') {
     // 옆으로 밀기 = 상체·고개를 뒤로 빼서 피하기
     clearTimeout(act.timer);
-    act.mode = 'sway'; ME().want.guard = false; doSway(); showFx('sway', e.clientX, e.clientY);
+    act.mode = 'sway'; ME().want.guard = false; doSway(); showFx('sway', q.x, q.y);
   } else if (-dy > SWIPE_PX && -dy > Math.abs(dx) * 1.2 && act.mode !== 'heavy') {
     // 위로 밀기 = 두 팔 빙글 펀치
     clearTimeout(act.timer);
-    act.mode = 'heavy'; ME().want.guard = false; ME().want.heavy = true; showFx('heavy', e.clientX, e.clientY);
+    act.mode = 'heavy'; ME().want.guard = false; ME().want.heavy = true; showFx('heavy', q.x, q.y);
   }
 });
 function actEnd(e) {
@@ -2498,10 +2523,9 @@ function perfTick(dt) {
 
 /* ---------- 루프 ---------- */
 let last = performance.now();
-const portraitMQ = matchMedia('(orientation: portrait)');
 function frame(now) {
   let dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (document.hidden || portraitMQ.matches) dt = 0;   // 세로로 들면 멈춤
+  if (document.hidden) dt = 0;   // 세로여도 눕혀서 보여주므로 멈추지 않음
   if (paused && !net.role) dt = 0;                    // 일시정지(혼자 할 때만 실제로 멈춤)
   if (quitted) { requestAnimationFrame(frame); return; }   // 게임 끄기: 그리지 않음
   updatePauseBtn();
@@ -2578,14 +2602,32 @@ function frame(now) {
 resetRound();
 requestAnimationFrame(frame);
 
-// 아이폰은 브라우저 안에서 전체 화면(Fullscreen API)이 안 됨 → 홈 화면에 추가해서 앱처럼 열도록 안내
+// 앱 설치 버튼: 안드로이드 크롬은 설치 창, 아이폰·그 밖은 홈 화면에 추가 안내
+let installEvt = null;
 (() => {
-  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const ua = navigator.userAgent;
+  const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const standalone = navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches);
-  if (!ios || standalone || !/github\.io$/.test(location.hostname)) return;
-  if (!/CriOS/.test(navigator.userAgent)) $('fsStep1').innerHTML = '화면 아래(가로면 위) <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러요.';
-  $('fsHintBtn').hidden = false;
-  $('fsHintBtn').addEventListener('click', () => { $('fsScreen').hidden = false; });
+  if (standalone || !(/github\.io$/.test(location.hostname) || /[?&]installtest=1/.test(location.search))) return;   // 이미 앱이거나 아티팩트면 숨김
+  const btn = $('installBtn'); btn.hidden = false;
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
+  window.addEventListener('appinstalled', () => { btn.hidden = true; installEvt = null; toast('설치됐어요! 홈 화면의 솜주먹 아이콘으로 열어 보세요.'); });
+  if (ios) {
+    if (/CriOS/.test(ua)) $('fsStep1').innerHTML = '주소창 오른쪽 <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러요.';
+    else $('fsStep1').innerHTML = '화면 아래(가로면 위) <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러요.';
+  } else {
+    $('fsStep1').innerHTML = '브라우저 오른쪽 위 <b>메뉴(⋮)</b>를 눌러요.';
+    $('fsStep2').innerHTML = '<b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 눌러요.';
+  }
+  btn.addEventListener('click', () => {
+    if (installEvt) {
+      const e = installEvt; installEvt = null;
+      e.prompt();
+      e.userChoice.then((c) => { if (c && c.outcome === 'accepted') btn.hidden = true; }).catch(() => {});
+      return;
+    }
+    $('fsScreen').hidden = false;
+  });
   $('fsClose').addEventListener('click', () => { $('fsScreen').hidden = true; });
 })();
 
