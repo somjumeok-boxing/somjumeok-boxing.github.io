@@ -62,3 +62,4 @@
 - 세로 화면(v39, 사용자 요청: '가로로 돌려주세요' 없이): 세로(터치 기기)면 모든 화면 요소를 #app으로 감싸 rotate(90deg)로 눕혀 표시(폰 윗부분이 왼쪽인 가로 방향). AW/AH=게임 화면 크기, toApp()으로 터치 좌표 변환(조이스틱·오른손·showFx), 렌더러·popAt도 AW/AH. 가로 레이아웃 CSS는 @media 대신 html.land(AW>AH·AH≤600). 세로여도 멈추지 않음(#rotate 안 씀). 테스트 test/rot.js(아이폰 세로 Chrome·WebKit, 조이스틱 오른쪽=오른쪽 이동).
 - 앱 설치 버튼(v39): 시작 카드 공유 버튼 왼쪽 #installBtn(github.io에서만, 이미 앱이면 숨김, ?installtest=1로 로컬 표시). beforeinstallprompt 있으면 설치 창, 없으면 #fsScreen '앱으로 설치하기' 안내(아이폰 사파리/크롬, 안드로이드 메뉴⋮ 문구 다름). 예전 '📲 전체 화면으로 하기' 글자 링크는 이 버튼으로 대체.
 - 앱 아이콘(v40, 사용자 선택: 시안 '10. 올리브 회색'): 게임 속 3D 글러브(chars.glb)를 렌더링해 가로로 맞댄 모습, 왼쪽 감자 검은 글러브·오른쪽 올리브 회색(0xa7a7a0) 글러브, 뒤에 흰 만화 폭발(검은 테두리), 바탕 노랑/코랄 대각선 반반. icon-512/192·apple-touch-icon 교체.
+- 글 가독성(v41, 사용자 요청): body word-break: keep-all(단어 중간 안 끊김), .card .sub·#toast·.card li·#guestWait는 white-space: pre-line(문구 속 \n = 줄바꿈)·text-wrap pretty, 제목 balance. 모든 안내 문구를 '상황\n해야 할 일' 두 줄로 정리, 오류 표시 [종류 · 버전]은 새 줄. 참가자는 연결되면 #netChoose(방 만들기·코드 입력) 숨김.

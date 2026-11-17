@@ -174,7 +174,11 @@ body {
 }
 .card h1 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 52px; line-height: .95; letter-spacing: .02em; text-wrap: balance; }
 .card h1 span { color: var(--coral); }
-.card .sub { margin: 0; color: var(--muted); font-size: 15px; }
+.card .sub { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.45; }
+/* 글 가독성: 단어 중간에서 안 끊기게, \n은 줄바꿈으로, 줄 길이 고르게 */
+body { word-break: keep-all; overflow-wrap: break-word; }
+.card .sub, #toast, .card li, #guestWait { white-space: pre-line; text-wrap: pretty; }
+.card h1, .card h2 { text-wrap: balance; }
 .card h2 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 40px; line-height: 1; }
 .diff { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .diff.pickrow { grid-template-columns: repeat(2, 1fr); }
@@ -336,9 +340,11 @@ html.land .sound { top: calc(env(safe-area-inset-top, 0px) + 84px); }
     <ol>
       <li id="fsStep1">주소창 오른쪽 <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러요.</li>
       <li id="fsStep2"><b>홈 화면에 추가</b>를 눌러요.</li>
-      <li>홈 화면에 생긴 <b>솜주먹</b> 아이콘으로 열면 주소창 없이 전체 화면이에요.</li>
+      <li>홈 화면에 생긴 <b>솜주먹</b> 아이콘으로 열면
+주소창 없이 전체 화면이에요.</li>
     </ol>
-    <p class="sub">초대 링크는 브라우저로 열리니, 설치한 앱에서는 코드 4자리를 넣어 참가하세요.</p>
+    <p class="sub">초대 링크는 브라우저로 열려요.
+설치한 앱에서는 코드 4자리를 넣어 참가하세요.</p>
     <button class="go" id="fsClose" type="button">알겠어요</button>
   </div>
 </div>
@@ -346,7 +352,8 @@ html.land .sound { top: calc(env(safe-area-inset-top, 0px) + 84px); }
 <div class="overlay" id="onlineScreen" hidden>
   <div class="card">
     <h2>온라인 대결</h2>
-    <p class="sub" id="netMsg">방을 만들거나, 친구가 알려준 코드를 넣으세요.</p>
+    <p class="sub" id="netMsg">방을 만들거나
+친구가 알려준 코드를 넣으세요.</p>
     <div class="diff pickrow" id="hostPickRow" role="group" aria-label="방장 캐릭터">
       <button class="choice pick" type="button" data-pick="kong" aria-pressed="true">🥔 감자</button>
       <button class="choice pick" type="button" data-pick="bam" aria-pressed="false">🍅 토마토</button>
@@ -1850,7 +1857,7 @@ const net = {
 const NET_TIMEOUT = 20000;   // 이만큼 소식이 없어야 진짜 끊김(그 전엔 자동으로 다시 연결 시도)
 const NET_SHAKY = 2500;      // 이만큼 소식이 없으면 '다시 연결하는 중' 안내
 // 게임 버전(친구와 서로 다른 버전이면 연결이 안 될 수 있어 화면에 표시하고 서로 비교)
-const BUILD = 'v40';
+const BUILD = 'v41';
 $('verLbl').textContent = BUILD;
 // 혼자 할 때 고른 캐릭터(감자=kong, 토마토=bam). 온라인은 방장=감자, 참가자=토마토
 let playerPick = 'kong';
@@ -1915,7 +1922,7 @@ $('nameIn').addEventListener('change', () => { try { localStorage.setItem('somju
 function openOnline() {
   $('startScreen').hidden = true; $('onlineScreen').hidden = false;
   $('netChoose').hidden = false; $('netWait').hidden = true; $('netStart').hidden = true;
-  netMsg((window.Peer || useBC) ? '방을 만들거나, 친구가 알려준 코드를 넣으세요.' : '연결 도구를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.');
+  netMsg((window.Peer || useBC) ? '방을 만들거나\n친구가 알려준 코드를 넣으세요.' : '연결 도구를 불러오지 못했어요.\n인터넷 연결을 확인하고 새로고침해 주세요.');
 }
 function bindConn(c) {
   net.conn = c;
@@ -1927,15 +1934,16 @@ function bindConn(c) {
       if (net.role === 'host') netSend({ t: 'side', s: net.hostSide });
       netSend({ t: 'name', n: myName(), v: BUILD });
       netShaky(false); toast('다시 연결됐어요!');
-      if (net.role === 'host' && !net.started) { netMsg('친구가 다시 들어왔어요! 시작을 누르세요.'); $('netStart').hidden = false; $('netWait').hidden = true; }
+      if (net.role === 'host' && !net.started) { netMsg('친구가 다시 들어왔어요!\n시작을 누르세요.'); $('netStart').hidden = false; $('netWait').hidden = true; }
       return;
     }
     net.everOpen = true;
     if (net.role === 'host') {
-      netMsg('친구가 들어왔어요! 시작을 누르세요.');
+      netMsg('친구가 들어왔어요!\n시작을 누르세요.');
       $('netStart').hidden = false; $('netWait').hidden = true;
     } else {
-      netMsg('연결됐어요! 방장이 시작하면 바로 시작돼요.');
+      $('netChoose').hidden = true;   // 참가자는 연결되면 방 만들기·코드 입력 숨김
+      netMsg('연결됐어요!\n방장이 시작하면 바로 시작돼요.');
     }
     net.lastHeard = performance.now();
     // 방장은 자기 캐릭터를 알려주고, 서로 이름 주고받기
@@ -1944,7 +1952,7 @@ function bindConn(c) {
     net.gotData = false;
     // 연결은 됐는데 상대 신호가 6초 안에 하나도 안 오면(예전 버전·브라우저 문제) 원인을 알려줌
     clearTimeout(net.silentT);
-    net.silentT = setTimeout(() => { if (net.role && net.conn && !net.gotData) netMsg('연결은 됐는데 친구 쪽 신호가 안 와요. 둘 다 새로고침(또는 탭을 닫고 다시 열기)한 뒤 다시 해주세요. 내 버전: ' + BUILD); }, 6000);
+    net.silentT = setTimeout(() => { if (net.role && net.conn && !net.gotData) netMsg('연결은 됐는데 친구 쪽 신호가 안 와요.\n둘 다 새로고침한 뒤 다시 해주세요. (' + BUILD + ')'); }, 6000);
     setNames('감자', '토마토');
     $(nameIdOf(ME())).textContent = myName();
     applyNetTags();
@@ -1966,7 +1974,7 @@ function bindConn(c) {
 function netShaky(on) {
   if (on === net.shaky) return;
   net.shaky = on;
-  if (on) { const el = $('toast'); el.textContent = '연결이 잠깐 끊겼어요… 다시 잇는 중'; el.hidden = false; clearTimeout(toastT); }
+  if (on) { const el = $('toast'); el.textContent = '연결이 잠깐 끊겼어요…\n다시 잇는 중'; el.hidden = false; clearTimeout(toastT); }
   else $('toast').hidden = true;
 }
 // 참가자: 방장에게 (다시) 연결
@@ -1992,7 +2000,7 @@ function onNetLost(msg) {
   mode = 'menu'; resetMatch(); resetRound();
   $('endScreen').hidden = true; $('startScreen').hidden = true; $('onlineScreen').hidden = false;
   $('netChoose').hidden = false; $('netWait').hidden = true; $('netStart').hidden = true;
-  netMsg(msg + ' 다시 방을 만들거나 참가하세요.');
+  netMsg(msg + '\n다시 방을 만들거나 참가하세요.');
 }
 function hostRoom(tries = 0) {
   netReset(); net.role = 'host'; net.code = newCode();
@@ -2000,9 +2008,9 @@ function hostRoom(tries = 0) {
   $('hostPickRow').hidden = true;
   $('netChoose').hidden = true; $('netWait').hidden = false; $('codeOut').textContent = net.code;
   netMsg('방을 만드는 중…');
-  if (useBC) { bindConn(bcConn(net.code, 'host')); netMsg('친구에게 이 코드를 알려주세요. 기다리는 중…'); return; }
+  if (useBC) { bindConn(bcConn(net.code, 'host')); netMsg('친구에게 이 코드를 알려주세요.\n기다리는 중…'); return; }
   const peer = new Peer(PEER_PREFIX + net.code); net.peer = peer; keepPeer(peer);
-  peer.on('open', () => { if (!net.everOpen) netMsg('친구에게 초대 링크나 코드를 보내주세요. 기다리는 중…'); });
+  peer.on('open', () => { if (!net.everOpen) netMsg('친구에게 초대 링크나 코드를 보내주세요.\n기다리는 중…'); });
   peer.on('connection', (c) => {
     // 이미 잘 연결돼 있으면 거절, 끊겼던 친구가 다시 들어오면 새 연결로 교체
     if (net.conn && net.conn.open && performance.now() - net.lastHeard < NET_SHAKY) { c.close(); return; }
@@ -2014,8 +2022,8 @@ function hostRoom(tries = 0) {
     if (e.type === 'unavailable-id' && !net.everOpen && tries < 4) return hostRoom(tries + 1);   // 코드가 겹치면 새 코드
     if (net.everOpen || (e.type !== 'unavailable-id' && peer.open)) { netShaky(net.everOpen); return; }   // 친구와 이미 이어졌거나 방이 열려 있으면 다시 붙을 때까지 기다림
     onNetLost((e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error'
-      ? '연결 서버에 닿지 못했어요. 인터넷 연결을 확인해 주세요.'
-      : '방을 만들지 못했어요.') + ' [' + e.type + ' · ' + BUILD + ']');
+      ? '연결 서버에 닿지 못했어요.\n인터넷 연결을 확인해 주세요.'
+      : '방을 만들지 못했어요.') + '\n[' + e.type + ' · ' + BUILD + ']');
   });
 }
 function joinRoom() {
@@ -2030,22 +2038,22 @@ function joinRoom() {
     if (net.conn && net.conn.open) return;
     guestConnect();
     if (net.everOpen) return;
-    setTimeout(() => { if (net.role === 'guest' && !net.started && !(net.conn && net.conn.open)) netMsg('방은 찾았는데 휴대폰끼리 연결이 안 돼요. 와이파이↔데이터를 바꾸거나 다른 브라우저로 해보세요. [' + BUILD + ']'); }, 10000);
+    setTimeout(() => { if (net.role === 'guest' && !net.started && !(net.conn && net.conn.open)) netMsg('방은 찾았는데 휴대폰끼리 연결이 안 돼요.\n와이파이↔데이터를 바꾸거나\n다른 브라우저로 해보세요. (' + BUILD + ')'); }, 10000);
   });
   peer.on('error', (e) => {
     if (net.peer !== peer) return;
     // 방장이 잠깐 다른 앱(카톡 등)에 가 있으면 방을 못 찾을 수 있음 → 2.5초마다 몇 번 더 찾아봄
     if (e.type === 'peer-unavailable' && (net.everOpen || ++net.joinTries < 7)) {
-      if (!net.everOpen) netMsg('방 ' + net.code + '을 찾는 중… 방장 휴대폰 화면이 게임에 켜져 있어야 해요. (' + net.joinTries + ')');
+      if (!net.everOpen) netMsg('방 ' + net.code + '을 찾는 중… (' + net.joinTries + ')\n방장 휴대폰 화면이 게임에 켜져 있어야 해요.');
       setTimeout(guestConnect, 2500); return;
     }
     if (net.everOpen) { netShaky(true); return; }   // 이미 같이 하던 중이면 다시 이어질 때까지 기다림
-    onNetLost((e.type === 'peer-unavailable' ? '그 코드의 방이 없어요. 방장 화면이 켜져 있는지, 코드가 맞는지 확인해 주세요.'
+    onNetLost((e.type === 'peer-unavailable' ? '그 코드의 방이 없어요.\n방장 화면이 켜져 있는지, 코드가 맞는지 확인해 주세요.'
       : (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error')
-        ? '연결 서버에 닿지 못했어요. 인터넷 연결을 확인해 주세요.'
+        ? '연결 서버에 닿지 못했어요.\n인터넷 연결을 확인해 주세요.'
         : e.type === 'webrtc' || e.type === 'browser-incompatible'
-          ? '이 브라우저에서 휴대폰끼리 연결이 안 돼요. 사파리나 다른 브라우저로 해보세요.'
-          : '방에 들어가지 못했어요.') + ' [' + e.type + ' · ' + BUILD + ']');
+          ? '이 브라우저에서는 휴대폰끼리 연결이 안 돼요.\n사파리나 다른 브라우저로 해보세요.'
+          : '방에 들어가지 못했어요.') + '\n[' + e.type + ' · ' + BUILD + ']');
   });
 }
 // 앱 전환(카톡 등)만 해도 pagehide가 오는 브라우저가 있어 'bye'는 나가기·홈으로 버튼에서만 보냄.
@@ -2064,7 +2072,7 @@ setInterval(() => {
   // 참가자는 연결이 닫혀 있으면 4초마다 다시 시도
   if (net.role === 'guest' && !(net.conn && net.conn.open) && performance.now() - (net.lastTry || 0) > 4000) guestConnect();
   if (quiet > NET_TIMEOUT)
-    onNetLost(net.gotData ? '친구와 연결이 끊겼어요.' : '연결은 됐는데 친구 쪽 신호가 안 와요. 둘 다 새로고침(또는 탭을 닫고 다시 열기)한 뒤 버전이 ' + BUILD + '인지 확인해 주세요.');
+    onNetLost(net.gotData ? '친구와 연결이 끊겼어요.' : '연결은 됐는데 친구 쪽 신호가 안 와요.\n둘 다 새로고침한 뒤 버전이 ' + BUILD + '인지 확인해 주세요.');
 }, 1000);
 // 양쪽 모두 1초마다 신호를 보내 연결 유지(세로로 돌려 멈춰도 끊기지 않게)
 setInterval(() => { if (net.role && net.conn) netSend({ t: 'ping' }); }, 1000);
@@ -2168,18 +2176,18 @@ function onNetData2(d) {
     $(nameIdOf(ME())).textContent = myName();
     if (net.friendName) $(nameIdOf(ME().foe)).textContent = net.friendName;
     applyNetTags();
-    netMsg('연결됐어요! 나는 ' + charName(ME()) + '예요. 방장이 시작하면 바로 시작돼요.');
+    netMsg('연결됐어요! 나는 ' + charName(ME()) + '예요.\n방장이 시작하면 바로 시작돼요.');
     return;
   }
   if (d.t === 'name') {
     const n = String(d.n || '').trim().slice(0, 8);
     if (d.v !== BUILD) {
       // 버전이 다르면 안내(예전 버전은 v가 없음)
-      setTimeout(() => netMsg('친구 게임 버전이 달라요(친구 ' + (d.v || '예전 버전') + ' / 나 ' + BUILD + '). 둘 다 새로고침하면 맞춰져요.'), 50);
+      setTimeout(() => netMsg('친구와 게임 버전이 달라요. (친구 ' + (d.v || '예전 버전') + ' / 나 ' + BUILD + ')\n둘 다 새로고침하면 맞춰져요.'), 50);
     }
     net.friendName = n;
     $(nameIdOf(ME().foe)).textContent = n || charName(ME().foe);
-    if (net.role === 'host') netMsg((n || '친구') + '님이 들어왔어요! 시작을 누르세요.');
+    if (net.role === 'host') netMsg((n || '친구') + '님이 들어왔어요!\n시작을 누르세요.');
     return;
   }
   if (net.role === 'host' && d.t === 'in') { net.inp = d; return; }
@@ -2488,7 +2496,7 @@ function copyText(t) {
   return Promise.resolve(legacy());
 }
 function shareLink(url, text, say) {
-  const copy = () => copyText(url).then((ok) => say(ok ? '링크를 복사했어요. 친구에게 보내주세요!' : '이 링크를 친구에게 보내주세요: ' + url));
+  const copy = () => copyText(url).then((ok) => say(ok ? '링크를 복사했어요.\n친구에게 보내주세요!' : '이 링크를 친구에게 보내주세요.\n' + url));
   if (navigator.share) navigator.share({ title: '솜주먹', text, url }).catch((e) => { if (!e || e.name !== 'AbortError') copy(); });
   else copy();
 }
@@ -2611,7 +2619,7 @@ let installEvt = null;
   if (standalone || !(/github\.io$/.test(location.hostname) || /[?&]installtest=1/.test(location.search))) return;   // 이미 앱이거나 아티팩트면 숨김
   const btn = $('installBtn'); btn.hidden = false;
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
-  window.addEventListener('appinstalled', () => { btn.hidden = true; installEvt = null; toast('설치됐어요! 홈 화면의 솜주먹 아이콘으로 열어 보세요.'); });
+  window.addEventListener('appinstalled', () => { btn.hidden = true; installEvt = null; toast('설치됐어요!\n홈 화면의 솜주먹 아이콘으로 열어 보세요.'); });
   if (ios) {
     if (/CriOS/.test(ua)) $('fsStep1').innerHTML = '주소창 오른쪽 <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러요.';
     else $('fsStep1').innerHTML = '화면 아래(가로면 위) <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러요.';
@@ -2655,7 +2663,7 @@ document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: fals
   openOnline();
   $('codeIn').value = code; $('hostPickRow').hidden = true;
   $('hostBtn').hidden = true; $('joinBtn').classList.remove('ghost');   // 초대받은 사람은 '참가'만 크게
-  netMsg('친구가 방 ' + code + '에 초대했어요! 이름을 넣고 참가를 눌러주세요.');
+  netMsg('친구가 방 ' + code + '에 초대했어요!\n이름을 넣고 참가를 눌러주세요.');
   q.delete('room');
   try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } catch (_) {}
 })();
