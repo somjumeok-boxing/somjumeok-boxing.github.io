@@ -1053,7 +1053,7 @@ const ROUND_TIME = 60;
 
 function makeState(rig, startX, name) {
   return {
-    rig, startX, name, pos: new THREE.Vector2(startX, 0), yaw: 0, kbv: 0, kbDir: new THREE.Vector2(), walkPh: 0, walkAmt: 0, move: { x: 0, y: 0 }, duckTimer: 0, duckCool: 0, swayTimer: 0, speedMul: 1, hp: 100, state: 'idle', t: 0, hand: 0, punchId: 0, resolved: false,
+    rig, startX, name, pos: new THREE.Vector2(startX, 0), yaw: 0, kbv: 0, kbDir: new THREE.Vector2(), walkPh: 0, walkAmt: 0, move: { x: 0, y: 0 }, duckTimer: 0, duckCool: 0, swayTimer: 0, swayCool: 0, speedMul: 1, hp: 100, state: 'idle', t: 0, hand: 0, punchId: 0, resolved: false,
     whiff: false, upper: false, counterTimer: 0, combo: 0, comboTimer: 0, push: 0,
     want: { guard: false, duck: false, sway: false, punch: false, heavy: false, taunt: null }, heavy: false, tauntKind: null, punchBuf: 0, p: pose(IDLE),
     landed: 0, guarded: 0, dodged: 0, downs: 0, fatigue: 0, pdur: PUNCH_DUR, pimp: IMPACT, armor: 0, tiredShown: false,
@@ -1115,7 +1115,7 @@ function resetRound(keepStats) {
     Object.assign(f, { hp: 100, state: 'idle', t: 0, whiff: false, upper: false, counterTimer: 0, combo: 0, push: 0, punchBuf: 0, fatigue: 0, armor: 0, pdur: PUNCH_DUR, pimp: IMPACT, thud: false });
     f.want.guard = f.want.duck = f.want.sway = f.want.punch = f.want.heavy = false; f.want.taunt = null; f.heavy = false; f.tauntKind = null;
     f.p = pose(IDLE);
-    f.pos.set(f.startX, 0); f.kbv = 0; f.duckTimer = 0; f.duckCool = 0; f.swayTimer = 0; f.move.x = f.move.y = 0; f.walkAmt = 0;
+    f.pos.set(f.startX, 0); f.kbv = 0; f.duckTimer = 0; f.duckCool = 0; f.swayTimer = 0; f.swayCool = 0; f.move.x = f.move.y = 0; f.walkAmt = 0;
     f.yaw = f.startX < 0 ? 0 : Math.PI;
   }
   Object.assign(ai, { next: 1.2, seen: 0, def: null, tell: 0, wasHit: false, tiredSeen: 0, lastGuarded: 0, strafe: 0, strafeT: 0, backT: 0 });
@@ -1374,6 +1374,7 @@ function updateFighter(f, dt) {
   if (f.duckTimer > 0) f.duckTimer -= dt;
   if (f.duckCool > 0) f.duckCool -= dt;
   if (f.swayTimer > 0) f.swayTimer -= dt;
+  if (f.swayCool > 0) f.swayCool -= dt;
   const wantPunch = f.want.punch || f.punchBuf > 0;
   const wantHeavy = f.want.heavy;
   const wantTaunt = f.want.taunt;
@@ -1857,7 +1858,7 @@ const net = {
 const NET_TIMEOUT = 20000;   // 이만큼 소식이 없어야 진짜 끊김(그 전엔 자동으로 다시 연결 시도)
 const NET_SHAKY = 2500;      // 이만큼 소식이 없으면 '다시 연결하는 중' 안내
 // 게임 버전(친구와 서로 다른 버전이면 연결이 안 될 수 있어 화면에 표시하고 서로 비교)
-const BUILD = 'v41';
+const BUILD = 'v42';
 $('verLbl').textContent = BUILD;
 // 혼자 할 때 고른 캐릭터(감자=kong, 토마토=bam). 온라인은 방장=감자, 참가자=토마토
 let playerPick = 'kong';
@@ -2092,7 +2093,7 @@ function hostTick(dt) {
     if ((i.h || 0) > net.lastH) { net.lastH = i.h; g.want.heavy = true; }
     if ((i.ts || 0) > net.lastT) { net.lastT = i.ts; g.want.taunt = i.tk === 'dance' ? 'dance' : 'beckon'; }
     if (i.d > net.lastD) { net.lastD = i.d; tryDuck(g); }
-    if ((i.sw || 0) > net.lastS) { net.lastS = i.sw; if (!busy(g) && g.state !== 'punch') g.swayTimer = SWAY_TIME; }
+    if ((i.sw || 0) > net.lastS) { net.lastS = i.sw; trySway(g); }
   } else { g.move.x = g.move.y = 0; }
   net.sendT -= dt;
   if (net.sendT <= 0) {
@@ -2278,8 +2279,14 @@ document.querySelectorAll('.taunt').forEach((b) => {
 const SWAY_TIME = 0.5;
 function doSway() {
   if (net.role === 'guest') { net.swaySeq++; return; }   // 온라인 참가자는 방장에게 보냄
-  if (busy(ME()) || ME().state === 'punch') return;
-  ME().swayTimer = SWAY_TIME;
+  trySway(ME());
+}
+// 빼기 연속 방지(사용자 요청, 숙이기와 같은 방식): 빼는 중엔 다시 못 빼고, 끝난 뒤 SWAY_COOL 동안도 못 뺌
+const SWAY_COOL = 0.4;
+function trySway(f) {
+  if (busy(f) || f.state === 'punch') return;
+  if (f.swayTimer > 0 || f.state === 'sway' || f.swayCool > 0) return;
+  f.swayTimer = SWAY_TIME; f.swayCool = SWAY_TIME + SWAY_COOL;
 }
 function doDuck() {
   if (net.role === 'guest') { net.duckSeq++; return; }   // 온라인 참가자는 방장에게 보냄

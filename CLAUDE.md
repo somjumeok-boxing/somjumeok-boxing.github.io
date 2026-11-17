@@ -63,3 +63,4 @@
 - 앱 설치 버튼(v39): 시작 카드 공유 버튼 왼쪽 #installBtn(github.io에서만, 이미 앱이면 숨김, ?installtest=1로 로컬 표시). beforeinstallprompt 있으면 설치 창, 없으면 #fsScreen '앱으로 설치하기' 안내(아이폰 사파리/크롬, 안드로이드 메뉴⋮ 문구 다름). 예전 '📲 전체 화면으로 하기' 글자 링크는 이 버튼으로 대체.
 - 앱 아이콘(v40, 사용자 선택: 시안 '10. 올리브 회색'): 게임 속 3D 글러브(chars.glb)를 렌더링해 가로로 맞댄 모습, 왼쪽 감자 검은 글러브·오른쪽 올리브 회색(0xa7a7a0) 글러브, 뒤에 흰 만화 폭발(검은 테두리), 바탕 노랑/코랄 대각선 반반. icon-512/192·apple-touch-icon 교체.
 - 글 가독성(v41, 사용자 요청): body word-break: keep-all(단어 중간 안 끊김), .card .sub·#toast·.card li·#guestWait는 white-space: pre-line(문구 속 \n = 줄바꿈)·text-wrap pretty, 제목 balance. 모든 안내 문구를 '상황\n해야 할 일' 두 줄로 정리, 오류 표시 [종류 · 버전]은 새 줄. 참가자는 연결되면 #netChoose(방 만들기·코드 입력) 숨김.
+- 빼기 연속 방지(v42, 사용자 요청: 숙이기와 같은 방식): trySway(f)로만 빼기 시작. 빼는 중엔 다시 못 빼고, 시작부터 SWAY_TIME 0.5 + SWAY_COOL 0.4초(swayCool) 동안 새 빼기 불가. 온라인 참가자 입력도 trySway. 테스트 test/swayspam.js(예전 98% 연속 → 63%).
